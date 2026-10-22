@@ -1,0 +1,32 @@
+SELECT ProductID, Name, ListPrice
+FROM SalesLT.Product
+WHERE ListPrice > (SELECT AVG(UnitPrice) FROM SalesLT.SalesOrderDetail)
+ORDER BY ProductID;
+
+SELECT ProductID, Name, ListPrice
+FROM SalesLT.Product
+WHERE ListPrice >= 100
+AND ProductID IN (SELECT ProductID FROM SalesLT.SalesOrderDetail WHERE UnitPrice < 100)
+ORDER BY ProductID;
+
+SELECT p.ProductID, p.Name, p.StandardCost, p.ListPrice,
+       (SELECT AVG(od.UnitPrice) FROM SalesLT.SalesOrderDetail AS od WHERE od.ProductID = p.ProductID) AS AvgSellingPrice
+FROM SalesLT.Product AS p
+ORDER BY p.ProductID;
+
+SELECT p.ProductID, p.Name, p.StandardCost, p.ListPrice,
+       (SELECT AVG(od.UnitPrice) FROM SalesLT.SalesOrderDetail AS od WHERE od.ProductID = p.ProductID) AS AvgSellingPrice
+FROM SalesLT.Product AS p
+WHERE p.StandardCost > (SELECT AVG(od.UnitPrice) FROM SalesLT.SalesOrderDetail AS od WHERE od.ProductID = p.ProductID)
+ORDER BY p.ProductID;
+
+SELECT oh.SalesOrderID, oh.CustomerID, c.FirstName, c.LastName, oh.TotalDue
+FROM SalesLT.SalesOrderHeader AS oh
+CROSS APPLY dbo.ufnGetCustomerInformation(oh.CustomerID) AS c
+ORDER BY oh.SalesOrderID;
+
+SELECT c.CustomerID, c.FirstName, c.LastName, a.AddressLine1, a.City
+FROM SalesLT.CustomerAddress AS ca
+JOIN SalesLT.Address AS a ON ca.AddressID = a.AddressID
+CROSS APPLY dbo.ufnGetCustomerInformation(ca.CustomerID) AS c
+ORDER BY c.CustomerID;

@@ -1,0 +1,47 @@
+SELECT p.ProductID, p.Name AS ProductName, p.ProductModel, v.Summary
+FROM SalesLT.Product AS p
+JOIN SalesLT.vProductModelCatalogDescription AS v ON p.ProductModelID = v.ProductModelID
+ORDER BY p.ProductID;
+
+DECLARE @Colors TABLE (Color nvarchar(50));
+INSERT INTO @Colors
+SELECT DISTINCT Color FROM SalesLT.Product WHERE Color IS NOT NULL;
+
+SELECT p.ProductID, p.Name AS ProductName, p.Color
+FROM SalesLT.Product AS p
+JOIN @Colors AS c ON p.Color = c.Color
+ORDER BY p.Color;
+
+CREATE TABLE #Sizes (Size nvarchar(50));
+INSERT INTO #Sizes
+SELECT DISTINCT Size FROM SalesLT.Product WHERE Size IS NOT NULL;
+
+SELECT p.ProductID, p.Name AS ProductName, p.Size
+FROM SalesLT.Product AS p
+JOIN #Sizes AS s ON p.Size = s.Size
+ORDER BY p.Size DESC;
+
+SELECT p.ProductID, p.Name AS ProductName, c.ParentCategory, c.Category
+FROM SalesLT.Product AS p
+CROSS APPLY dbo.ufnGetAllCategories() AS c
+WHERE p.ProductCategoryID = c.ProductCategoryID
+ORDER BY c.ParentCategory, c.Category, p.Name;
+
+SELECT d.CompanyContact, SUM(d.TotalDue) AS Revenue
+FROM (
+    SELECT c.CompanyName + ' (' + c.FirstName + ' ' + c.LastName + ')' AS CompanyContact, oh.TotalDue
+    FROM SalesLT.Customer AS c
+    JOIN SalesLT.SalesOrderHeader AS oh ON c.CustomerID = oh.CustomerID
+) AS d
+GROUP BY d.CompanyContact
+ORDER BY d.CompanyContact;
+
+WITH CustomerOrders (CompanyContact, TotalDue) AS (
+    SELECT c.CompanyName + ' (' + c.FirstName + ' ' + c.LastName + ')', oh.TotalDue
+    FROM SalesLT.Customer AS c
+    JOIN SalesLT.SalesOrderHeader AS oh ON c.CustomerID = oh.CustomerID
+)
+SELECT CompanyContact, SUM(TotalDue) AS Revenue
+FROM CustomerOrders
+GROUP BY CompanyContact
+ORDER BY CompanyContact;
